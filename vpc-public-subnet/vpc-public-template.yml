@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A sample template to create VPC with 1 Public subnet and EC2-Instance
+Resources:
+  BastionVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "172.0.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: "default"
+      Tags:
+      - Key: Name
+        Value: BastionVPC
