@@ -59,3 +59,25 @@ Resources:
         Ref: PublicSubnet
       RouteTableId:
         Ref: PublicRouteTable
+  InstanceSecurityGroup:                ##Creating New Sg Group
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId:
+        Ref: BastionVPC
+      Tags:
+      - Key: Name
+        Value: PublicSG
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
