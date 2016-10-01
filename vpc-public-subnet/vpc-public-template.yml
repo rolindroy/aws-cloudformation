@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A sample template to create VPC with 1 Public subnet and EC2-Instance
 Resources:
-  BastionVPC:
+  BastionVPC:                           ##Creating VPC with Tag::Name=> BastionVPC
     Type: "AWS::EC2::VPC"
     Properties:
       CidrBlock: "172.0.0.0/16"
@@ -11,3 +11,51 @@ Resources:
       Tags:
       - Key: Name
         Value: BastionVPC
+  PublicSubnet:                         ##Creating Public Subnet and attached with BastionVPC
+    Type: "AWS::EC2::Subnet"
+    Properties: 
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "172.0.0.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: PublicSubnet
+      VpcId: 
+        Ref: BastionVPC
+  IGWPublic:                            ##Creating InternetGateway for Public subnet
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: IGWPublic
+  PublicRouteTable:                     ##Leaving Default Route table as it is and creating new RouteTable
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: BastionVPC
+      Tags:
+      - Key: Name
+        Value: PublicRouteTable
+  AttachGateway:                        ##Attaching Gateway to VPC
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: BastionVPC
+      InternetGatewayId:
+        Ref: IGWPublic
+  PublicRoute:                          ##Attaching IGW with Route Table
+    Type: AWS::EC2::Route
+    DependsOn: IGWPublic
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: IGWPublic
+  PublicSubnetRouteTableAssociation:    ##Subnet Association with RouteTable
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      RouteTableId:
+        Ref: PublicRouteTable
