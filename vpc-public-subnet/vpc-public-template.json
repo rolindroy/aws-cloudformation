@@ -1,0 +1,62 @@
+{
+   "AWSTemplateFormatVersion" : "2010-09-09",
+   "Description" : "A sample template to create VPC with 1 Public subnet and EC2-Instance",
+   "Resources" : {
+      "BastionVPC" : {
+         "Type" : "AWS::EC2::VPC",
+         "Properties" : {
+            "CidrBlock" : "172.0.0.0/16",
+    	    "EnableDnsSupport" : "true",
+    	    "EnableDnsHostnames" : "true",
+            "InstanceTenancy" : "default",
+            "Tags" : [ {"Key" : "Name", "Value" : "BastionVPC"} ]
+         }
+      },
+	  "PublicSubnet" : {
+	     "Type" : "AWS::EC2::Subnet",
+		 "Properties" : {
+		    "AvailabilityZone" : "us-east-1a",
+			"CidrBlock" : "172.0.0.0/24",
+			"MapPublicIpOnLaunch" : "true",
+			"VpcId" : { "Ref" : "BastionVPC" },
+			"Tags" : [ {"Key" : "Name", "Value" : "PublicSubnet"} ]
+		 }
+	  },
+	  "IGWPublic" : {
+	     "Type" : "AWS::EC2::InternetGateway",
+		 "Properties" : {
+		    "Tags" : [ {"Key" : "Name", "Value" : "IGWPublic"} ]
+		 }
+	  },
+	  "PublicRouteTable" : {
+         "Type" : "AWS::EC2::RouteTable",
+         "Properties" : {
+            "VpcId" : { "Ref" : "BastionVPC" },
+            "Tags" : [ { "Key" : "Name", "Value" : "PublicRouteTable" } ]
+         }
+      },
+	  "AttachGateway" : {
+	     "Type" : "AWS::EC2::VPCGatewayAttachment",
+	     "Properties" : {
+		    "VpcId" : { "Ref" : "BastionVPC" },
+		    "InternetGatewayId" : { "Ref" : "IGWPublic" }
+	     }
+	  },
+	  "PublicRoute" : {
+         "Type" : "AWS::EC2::Route",
+         "DependsOn" : "IGWPublic",
+         "Properties" : {
+            "RouteTableId" : { "Ref" : "PublicRouteTable" },
+            "DestinationCidrBlock" : "0.0.0.0/0",
+            "GatewayId" : { "Ref" : "IGWPublic" }
+         }
+      },
+	  "PublicSubnetRouteTableAssociation" : {
+         "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+         "Properties" : {
+            "SubnetId" : { "Ref" : "PublicSubnet" },
+            "RouteTableId" : { "Ref" : "PublicRouteTable" }
+         }
+      }
+   }
+}  
