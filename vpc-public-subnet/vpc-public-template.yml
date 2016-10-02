@@ -1,6 +1,44 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A sample template to create VPC with 1 Public subnet and EC2-Instance
+
+Parameters:
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t2.micro
+    - m1.small
+    - m1.medium
+    - m1.large
+    - m1.xlarge
+    - m2.xlarge
+    - m2.2xlarge
+    - m2.4xlarge
+    - m3.xlarge
+    - m3.2xlarge
+    - c1.medium
+    - c1.xlarge
+    - cc1.4xlarge
+    - cc2.8xlarge
+    - cg1.4xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+  
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: "[\\x20-\\x7E]*"
+    ConstraintDescription: can contain only ASCII characters.
+    
+  TagName:
+    Description: Tag Name for all Resources
+    Type: String
+    Default: Bastion-Stack
+
 Resources:
+
   BastionVPC:                           ##Creating VPC with Tag::Name=> BastionVPC
     Type: "AWS::EC2::VPC"
     Properties:
@@ -10,7 +48,9 @@ Resources:
       InstanceTenancy: "default"
       Tags:
       - Key: Name
-        Value: BastionVPC
+        Value:
+          Ref : TagName
+          
   PublicSubnet:                         ##Creating Public Subnet and attached with BastionVPC
     Type: "AWS::EC2::Subnet"
     Properties: 
@@ -19,15 +59,19 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
       - Key: Name
-        Value: PublicSubnet
+        Value:
+          Ref : TagName
       VpcId: 
         Ref: BastionVPC
+        
   IGWPublic:                            ##Creating InternetGateway for Public subnet
     Type: "AWS::EC2::InternetGateway"
     Properties:
       Tags:
       - Key: Name
-        Value: IGWPublic
+        Value:
+          Ref : TagName
+          
   PublicRouteTable:                     ##Leaving Default Route table as it is and creating new RouteTable
     Type: AWS::EC2::RouteTable
     Properties:
@@ -35,7 +79,9 @@ Resources:
         Ref: BastionVPC
       Tags:
       - Key: Name
-        Value: PublicRouteTable
+        Value:
+          Ref : TagName
+          
   AttachGateway:                        ##Attaching Gateway to VPC
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -43,6 +89,7 @@ Resources:
         Ref: BastionVPC
       InternetGatewayId:
         Ref: IGWPublic
+        
   PublicRoute:                          ##Attaching IGW with Route Table
     Type: AWS::EC2::Route
     DependsOn: IGWPublic
@@ -52,6 +99,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId:
         Ref: IGWPublic
+        
   PublicSubnetRouteTableAssociation:    ##Subnet Association with RouteTable
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -59,6 +107,7 @@ Resources:
         Ref: PublicSubnet
       RouteTableId:
         Ref: PublicRouteTable
+        
   InstanceSecurityGroup:                ##Creating New Sg Group
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -67,7 +116,8 @@ Resources:
         Ref: BastionVPC
       Tags:
       - Key: Name
-        Value: PublicSG
+        Value:
+          Ref : TagName
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '80'
