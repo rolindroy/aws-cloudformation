@@ -28,6 +28,14 @@
     }
   },
   
+  "Mappings" : {
+    "RegionMap" : {
+      "us-east-1" : {
+        "AMI" : "ami-c481fad3"
+      }
+    }
+  },
+  
   "Resources" : {
     
     "BastionVPC" : {
@@ -165,7 +173,49 @@
           }
         ]
       }
-    }
+    },
+    
+    "EIPAddress" : {
+      "Type" : "AWS::EC2::EIP",
+      "DependsOn" : "EC2Instance",
+      "Properties" : {
+        "Domain" : "vpc",
+        "InstanceId" : {
+          "Ref" : "EC2Instance"
+        }
+      }
+    },
+    
+    "EC2Instance" : {
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "ImageId" : {
+          "Fn::FindInMap" : ["RegionMap", {
+              "Ref" : "AWS::Region"
+            }, "AMI"]
+        },
+        "SecurityGroupIds" : [{
+            "Ref" : "InstanceSecurityGroup"
+          }
+        ],
+        "SubnetId" : {
+          "Ref" : "PublicSubnet"
+        },
+        "InstanceType" : {
+          "Ref" : "InstanceType"
+        },
+        "KeyName" : {
+          "Ref" : "KeyName"
+        },
+        "Tags" : [{
+            "Key" : "Name",
+            "Value" : {
+              "Ref" : "TagName"
+            }
+          }
+        ]
+      }
+    },
     
   }
 }
